@@ -1,0 +1,7 @@
+# Local config (Nextcloud address etc.)
+.env
+
+__pycache__/
+
+# Local Claude Code settings (personal tooling)
+.claude/

@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "for f in public/js/*.js public/js/*/*.js; do node --check \"$f\" || exit 1; done && node tests/test_terrain_math.js && python3 tests/test_server.py"
+  }
+}

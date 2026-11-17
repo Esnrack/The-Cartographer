@@ -1,0 +1,277 @@
+:root {
+  color-scheme: dark; /* dark scrollbars and native controls */
+  --bg: #1b1814;
+  --panel: #27221c;
+  --panel-2: #332c24;
+  --ink: #ece2cc;
+  --muted: #a89a80;
+  --accent: #c9a45c;
+  --line: #463d31;
+  --danger: #a5463c;
+  --focus: #f0cf8a;
+  --ease: 140ms ease-out;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar h1 {
+  margin: 0 14px 0 4px;
+  font: 24px "IM Fell English SC", Georgia, serif;
+  color: var(--accent);
+}
+
+.sep { width: 1px; height: 24px; background: var(--line); margin: 0 4px; }
+.muted { color: var(--muted); font-size: 12px; min-width: 44px; }
+
+button, select, input, textarea { font: inherit; color: var(--ink); }
+
+button {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button, select, input, textarea { transition: background-color var(--ease), border-color var(--ease), color var(--ease); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ic { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.topbar button { display: inline-flex; align-items: center; gap: 6px; }
+/* Narrow screens: icons only (the text stays in title and for screen readers) */
+@media (max-width: 1360px) {
+  .topbar button:has(.ic) { padding: 7px 9px; }
+  .topbar button:has(.ic) span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+}
+@media (max-width: 900px) {
+  .topbar h1 { font-size: 18px; margin-right: 6px; }
+}
+button:disabled { opacity: 0.4; cursor: default; }
+button.active, button.primary { background: var(--accent); color: #1b1814; border-color: var(--accent); }
+button.danger:hover { background: var(--danger); border-color: var(--danger); }
+
+select, input[type="text"], input[type="search"], input[type="number"], textarea {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 5px 6px;
+}
+textarea { resize: vertical; }
+
+kbd {
+  font: 11px ui-monospace, monospace;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--muted);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: auto 1fr 300px;
+  min-height: 0;
+}
+
+.tools {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+}
+.tools button { display: flex; align-items: center; gap: 8px; text-align: left; }
+.tools button span { flex: 1; margin-right: 6px; }
+.tools button.active kbd { color: #1b1814; border-color: #1b1814; }
+
+.stage { position: relative; overflow: hidden; min-width: 0; }
+#view, #globe { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+.label-editor {
+  position: absolute;
+  margin: 0;
+  border: 1px dashed var(--accent);
+  border-radius: 3px;
+  background: rgba(255, 250, 235, 0.35);
+  line-height: 1.15;
+  text-align: center;
+  white-space: pre;
+  overflow: hidden;
+  resize: none;
+  outline: none;
+  transform-origin: center;
+}
+/* Curved text: the textarea only takes typing; text, cursor and selection are drawn on the curve */
+.label-editor.curved { color: transparent !important; caret-color: transparent; background: transparent; }
+.label-editor.curved::selection { background: transparent; }
+
+.status {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.panel {
+  overflow-y: auto;
+  padding: 0 14px 24px;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+}
+.panel section, .panel .fold { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.fold summary { display: flex; align-items: center; justify-content: space-between; cursor: pointer; list-style: none; border-radius: 4px; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary h2 { margin: 0; }
+.fold[open] summary { margin-bottom: 8px; }
+.fold summary::after { content: ''; width: 7px; height: 7px; margin: 0 4px 4px 0; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform var(--ease); }
+.fold:not([open]) summary::after { transform: rotate(-45deg); margin-bottom: 0; }
+.fold summary:hover::after { border-color: var(--accent); }
+.panel h2, dialog h2 {
+  margin: 0 0 8px;
+  font: 20px "IM Fell English SC", Georgia, serif;
+  color: var(--accent);
+}
+.panel label, dialog label { display: block; margin: 8px 0; color: var(--muted); font-size: 13px; }
+.panel label output { float: right; color: var(--ink); }
+/* editable number next to the slider: looks like text until hover or click */
+.panel label input.num {
+  float: right; width: 64px; margin: -2px -4px 0 0; padding: 1px 4px;
+  text-align: right; font-size: 13px; color: var(--ink);
+  background: transparent; border: 1px solid transparent; border-radius: 3px; cursor: text;
+}
+.panel label input.num:hover { border-color: var(--line); }
+.panel label input.num:focus { border-color: var(--accent); background: var(--bg); }
+.panel label select, .panel label textarea, dialog label select, dialog label input { display: block; width: 100%; margin-top: 3px; }
+.panel label.check { display: flex; align-items: center; gap: 6px; }
+/* several selected objects with the same size: only the size control */
+.only-size > :not([data-size]) { display: none !important; }
+input[type="range"] { display: block; width: 100%; accent-color: var(--accent); }
+input[type="checkbox"] { accent-color: var(--accent); }
+a { color: var(--accent); }
+a:hover { color: var(--focus); }
+.panel { scrollbar-color: var(--line) var(--panel); }
+input[type="color"] { display: block; width: 100%; height: 30px; border: 1px solid var(--line); background: var(--bg); padding: 2px; }
+
+.hint { margin: 6px 0; font-size: 12px; color: var(--muted); }
+code { font-size: 11px; color: var(--ink); }
+.row { display: flex; gap: 6px; }
+.row > * { flex: 1; }
+.row.end { justify-content: flex-end; }
+.row.end > * { flex: 0 0 auto; }
+
+.swatches { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.swatch { display: flex; align-items: center; gap: 6px; padding: 4px 6px; }
+.swatch i { width: 18px; height: 18px; flex: none; border-radius: 3px; border: 1px solid rgba(0, 0, 0, 0.5); }
+
+.lib h3 {
+  margin: 12px 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.lib-search { display: block; width: 100%; margin: 12px 0 0; }
+.lib-add { display: block; width: 100%; margin: 12px 0 0; }
+.lib .packs { margin: 8px 0 4px; font-size: 12px; }
+.lib .packs summary { cursor: pointer; color: var(--muted); }
+.lib .packs summary::marker { color: var(--accent); }
+.lib .packs summary:hover { color: var(--ink); }
+.lib .packs label { margin: 4px 0 0; }
+.lib .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.lib .cat summary { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; border-radius: 4px; }
+.lib .cat summary::-webkit-details-marker { display: none; }
+.lib .cat summary::before { content: ''; width: 5px; height: 5px; margin: 8px 3px 4px 1px; border: solid var(--muted); border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); transition: transform var(--ease); }
+.lib .cat:not([open]) summary::before { transform: rotate(-45deg); margin-top: 4px; }
+.lib .cat summary h3 { margin: 12px 0 4px; }
+.lib .cat summary small { margin-top: 8px; font-size: 11px; color: var(--muted); opacity: 0.7; }
+.lib .cat summary:hover h3, .lib .cat summary:hover::before { color: var(--ink); border-color: var(--ink); }
+.lib button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 4px;
+  background: #e6dbc1;
+}
+.lib button img, .lib button canvas { max-width: 100%; max-height: 100%; }
+.lib .dice { font-size: 22px; }
+.lib button.active { outline: 3px solid var(--accent); outline-offset: -3px; background: #f3ead6; }
+
+dialog {
+  width: min(420px, 92vw);
+  padding: 18px;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.cloud-title { margin: 16px 0 6px; font-size: 13px; color: var(--muted); }
+.cloud-list { display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow-y: auto; margin-bottom: 12px; }
+.cloud-list button { display: flex; justify-content: space-between; gap: 12px; text-align: left; }
+.cloud-list small { color: var(--muted); }
+.save-options { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.save-options button { display: flex; align-items: center; gap: 10px; padding: 10px 14px; font-size: 15px; text-align: left; }
+.save-options .ic { width: 20px; height: 20px; color: var(--accent); }
+.ic.brand { stroke: none; } /* colored logos: own colors, without the line icons' stroke */
+/* field with fixed prefix (https://): the prefix sits inside the same box, outside the editable text */
+.prefixed { display: flex; align-items: center; margin-top: 3px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; transition: border-color var(--ease); }
+.prefixed:focus-within { border-color: var(--accent); outline: 2px solid var(--focus); outline-offset: 2px; }
+.prefixed span { padding-left: 7px; color: var(--muted); user-select: none; }
+.prefixed input { flex: 1; min-width: 0; width: auto; margin-top: 0; border: 0; background: transparent; padding-left: 1px; }
+.prefixed input:focus-visible { outline: none; }
+dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+
+/* Tutorial: spotlight (a hole in a dark overlay, made by a huge shadow) and the step card */
+.tour-spot {
+  position: fixed; z-index: 1000; pointer-events: none; border-radius: 8px;
+  outline: 2px solid var(--accent); box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+  transition: left 200ms ease-out, top 200ms ease-out, width 200ms ease-out, height 200ms ease-out;
+}
+.tour-card {
+  position: fixed; z-index: 1001; width: min(330px, calc(100vw - 24px)); padding: 16px 18px 14px;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--accent); border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.tour-card h2 { margin: 0 0 8px; font: 20px "IM Fell English SC", Georgia, serif; color: var(--accent); }
+.tour-card .tour-body { margin: 0 0 14px; line-height: 1.5; }
+.tour-card .tour-count { margin: 0 0 4px; font-size: 12px; color: var(--muted); }
+.tour-card .row { align-items: center; }
+.tour-card .tour-gap { flex: 1; }
+.tour-card .tour-skip { background: none; border-color: transparent; color: var(--muted); padding-left: 0; }
+.tour-card .tour-skip:hover { color: var(--ink); border-color: transparent; text-decoration: underline; }
+dialog[open] { animation: dlg-in 160ms ease-out; }
+@keyframes dlg-in { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

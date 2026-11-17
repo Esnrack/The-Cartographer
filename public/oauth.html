@@ -1,0 +1,11 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>The Cartographer</title>
+<!-- Google Drive / OneDrive login return: passes the response to the site's tab and closes. -->
+<script>
+  const params = (location.hash.slice(1) || location.search.slice(1));
+  history.replaceState(null, '', location.pathname); // keeps the token/code out of the history
+  new BroadcastChannel('the-cartographer-oauth').postMessage(params);
+  setTimeout(() => window.close(), 100);
+</script>
+<p style="font-family: sans-serif">Login concluído. Pode fechar esta janela.</p>

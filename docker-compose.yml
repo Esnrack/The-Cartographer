@@ -1,0 +1,25 @@
+services:
+  the-cartographer:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      # Swap images in ./public/assets without rebuilding the image
+      - ./public/assets:/usr/share/nginx/html/assets:ro
+    depends_on:
+      - proxy
+    restart: unless-stopped
+
+  # Nextcloud proxy (server.py): checks the typed address before connecting.
+  # No published port: only the nginx above talks to it.
+  proxy:
+    image: python:3.12-alpine
+    command: python /app/server.py
+    environment:
+      - PORT=8081
+      # Google Drive and OneDrive IDs, read from the .env file (outside git)
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - ONEDRIVE_CLIENT_ID=${ONEDRIVE_CLIENT_ID:-}
+    volumes:
+      - ./server/server.py:/app/server.py:ro
+    restart: unless-stopped
