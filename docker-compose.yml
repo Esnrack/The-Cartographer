@@ -2,8 +2,9 @@ services:
   the-cartographer:
     build: .
     ports:
-      # Only this computer. To serve your network or the internet, use "8080:80" (see the README).
-      - "127.0.0.1:8080:80"
+      # APP_PORT (default 8080) and APP_BIND (default 127.0.0.1 = only this machine) come from .env.
+      # Behind a reverse proxy with HTTPS (recommended on a server), keep APP_BIND=127.0.0.1.
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8080}:80"
     volumes:
       # Swap images in ./public/assets without rebuilding the image
       - ./public/assets:/usr/share/nginx/html/assets:ro
