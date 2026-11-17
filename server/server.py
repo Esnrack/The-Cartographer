@@ -8,6 +8,8 @@ So a typed address cannot become a gateway to other places:
 - the name is resolved here and every IP must be public (no localhost, internal
   network, cloud metadata), and the connection goes to the already checked IP (no DNS rebinding);
 - redirects are not followed; response capped at 20 MB;
+- the target must answer /status.php like a Nextcloud does (checked once, cached), so the proxy
+  can't be used as an anonymous relay to arbitrary HTTPS sites;
 - only login (Login Flow v2), .json files in the Mapas folder and app password revocation
   pass (ALLOWED; in Docker nginx forwards all of /nextcloud/ here); the browser never treats the response as a page.
 The site stores no password: each user signs in with their own Nextcloud account.
@@ -16,7 +18,8 @@ Also generates /js/storage/cloud-config.js with the Google Drive and OneDrive ID
 (GOOGLE_CLIENT_ID, ONEDRIVE_CLIENT_ID; start.sh and docker-compose read them from .env), so they
 are not committed to the repository. They are not secrets: the browser needs to receive them.
 
-Environment variables: PORT (default 8080), GOOGLE_CLIENT_ID, ONEDRIVE_CLIENT_ID.
+Environment variables: PORT (default 8080), HOST (default 127.0.0.1: only this computer; use 0.0.0.0
+to serve the network), GOOGLE_CLIENT_ID, ONEDRIVE_CLIENT_ID.
 """
 import http.client
 import ipaddress
@@ -25,11 +28,13 @@ import os
 import re
 import socket
 import ssl
+import time
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import quote, unquote, urlsplit
 
 PORT = int(os.environ.get('PORT', '8080'))
+HOST = os.environ.get('HOST', '127.0.0.1')
 MAX_BYTES = 20 * 1024 * 1024
 ALLOWED = [
     ({'POST'}, re.compile(r'^/nextcloud/(index\.php/)?login/v2(/poll)?$')),
@@ -85,7 +90,40 @@ class PinnedHTTPS(http.client.HTTPSConnection):
         self.sock = self.ctx.wrap_socket(socket.create_connection((self.ip, 443), self.timeout), server_hostname=self.host)
 
 
+def fetch_status(host, prefix, ip):
+    """JSON of https://host/prefix/status.php, or None."""
+    conn = PinnedHTTPS(host, ip)
+    try:
+        conn.request('GET', prefix + '/status.php', headers={'Accept': 'application/json'})
+        r = conn.getresponse()
+        return json.loads(r.read(65536)) if r.status == 200 else None
+    except (OSError, http.client.HTTPException, ValueError):
+        return None
+    finally:
+        conn.close()
+
+
+_checked = {}  # (host, prefix) -> (is Nextcloud?, valid until)
+
+
+def is_nextcloud(host, prefix, ip):
+    """Does the target answer status.php like a Nextcloud? Cached: 10 min if yes, 1 min if not."""
+    key, now = (host, prefix), time.monotonic()
+    hit = _checked.get(key)
+    if hit and hit[1] > now:
+        return hit[0]
+    st = fetch_status(host, prefix, ip)
+    # fields every Nextcloud status.php has (productname can be rebranded, so it isn't checked)
+    ok = isinstance(st, dict) and st.get('installed') is True and isinstance(st.get('version'), str) and 'versionstring' in st
+    if len(_checked) > 1000:  # many different addresses: start over instead of growing forever
+        _checked.clear()
+    _checked[key] = (ok, now + (600 if ok else 60))
+    return ok
+
+
 class Handler(SimpleHTTPRequestHandler):
+    timeout = 30  # seconds per connection: slow or half-sent requests used to hold a thread forever
+
     def proxy(self):
         path = unquote(urlsplit(self.path).path)
         if not allowed(self.command, path):
@@ -94,6 +132,8 @@ class Handler(SimpleHTTPRequestHandler):
         if not target:
             return self.send_error(400, 'Endereço do Nextcloud inválido ou não permitido')
         host, prefix, ip = target
+        if not is_nextcloud(host, prefix, ip):
+            return self.send_error(400, 'Esse endereço não responde como um Nextcloud')
         try:
             length = int(self.headers.get('Content-Length') or 0)
         except ValueError:
@@ -146,4 +186,4 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'public')
     print(f'Abra http://localhost:{PORT} no navegador (Ctrl+C para parar).')
-    ThreadingHTTPServer(('', PORT), partial(Handler, directory=root)).serve_forever()
+    ThreadingHTTPServer((HOST, PORT), partial(Handler, directory=root)).serve_forever()

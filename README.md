@@ -25,6 +25,11 @@ Just reload the page.
 # open http://localhost:8080
 ```
 
+Both only answer **on this computer** (`127.0.0.1`). To serve your network or the internet on purpose:
+in `docker-compose.yml` change `"127.0.0.1:8080:80"` to `"8080:80"`; with `start.sh`, set `HOST=0.0.0.0`
+(in `.env` or `HOST=0.0.0.0 ./start.sh`). Publish through Docker: nginx adds the security headers
+(`server/security-headers.conf`) and rate-limits the Nextcloud proxy.
+
 Opening `index.html` straight from the file manager **does not work**: on `file://` the browser
 blocks JavaScript modules and reading `manifest.json`. Any static server works (nginx, Apache,
 `npx serve public`…), but then the **Nextcloud** option doesn't: it needs the `server/server.py`
@@ -210,7 +215,8 @@ public/                 the site (static files)
     tour.js             step-by-step tutorial
 server/
   server.py             local server (start.sh) and Nextcloud proxy (Docker)
-  nginx.conf            nginx configuration in Docker
+  nginx.conf            nginx configuration in Docker (rate limit for the proxy)
+  security-headers.conf CSP and other security headers added by nginx
 scripts/
   add-images.py         registers new images from public/assets in manifest.json
   generate-mountains.py generates the mountains in assets/generated

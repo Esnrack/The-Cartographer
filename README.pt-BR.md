@@ -26,6 +26,11 @@ reconstruir. Basta recarregar a página.
 # abra http://localhost:8080
 ```
 
+Os dois só respondem **neste computador** (`127.0.0.1`). Para servir a sua rede ou a internet de propósito:
+no `docker-compose.yml`, troque `"127.0.0.1:8080:80"` por `"8080:80"`; no `start.sh`, defina `HOST=0.0.0.0`
+(no `.env` ou `HOST=0.0.0.0 ./start.sh`). Para publicar, use o Docker: o nginx acrescenta os cabeçalhos de
+segurança (`server/security-headers.conf`) e limita os pedidos ao proxy do Nextcloud.
+
 Abrir o `index.html` direto pelo explorador de arquivos **não funciona**: em `file://`
 o navegador bloqueia os módulos JavaScript e a leitura do `manifest.json`. Qualquer
 servidor estático serve (nginx, Apache, `npx serve public`…), mas aí a opção **Nextcloud**
@@ -210,7 +215,8 @@ public/                 o site (arquivos estáticos)
     tour.js             tutorial passo a passo
 server/
   server.py             servidor local (start.sh) e proxy do Nextcloud (Docker)
-  nginx.conf            configuração do nginx no Docker
+  nginx.conf            configuração do nginx no Docker (limite de pedidos ao proxy)
+  security-headers.conf CSP e outros cabeçalhos de segurança acrescentados pelo nginx
 scripts/
   add-images.py         registra imagens novas de public/assets no manifest.json
   generate-mountains.py gera as montanhas de assets/generated

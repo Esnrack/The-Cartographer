@@ -4,7 +4,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'server'))
-from server import allowed, cloud_config, nextcloud_target as alvo  # noqa: E402
+import server  # noqa: E402
+from server import allowed, cloud_config, is_nextcloud, nextcloud_target as alvo  # noqa: E402
 
 for ruim in ['http://1.1.1.1', 'https://127.0.0.1', 'https://localhost', 'https://10.0.0.5', 'https://192.168.1.10',
              'https://169.254.169.254', 'https://1.1.1.1:8443', 'https://user:pw@1.1.1.1', 'https://1.1.1.1/../x',
@@ -28,4 +29,14 @@ os.environ.update(GOOGLE_CLIENT_ID='123-abc.apps.googleusercontent.com', ONEDRIV
 cfg = cloud_config()
 assert 'export const GOOGLE_CLIENT_ID = "123-abc.apps.googleusercontent.com";' in cfg, cfg
 assert 'export const ONEDRIVE_CLIENT_ID = "";' in cfg, cfg
+
+# Only targets that answer status.php like a Nextcloud are proxied (no open relay); answers are cached
+calls = []
+NC = {'installed': True, 'maintenance': False, 'version': '30.0.1.2', 'versionstring': '30.0.1', 'productname': 'MinhaNuvem'}
+replies = {'nc.example': NC, 'site.example': None, 'fake.example': {'installed': True}, 'html.example': None}
+server.fetch_status = lambda host, prefix, ip: (calls.append(host), replies[host])[1]
+assert is_nextcloud('nc.example', '', '1.1.1.1')            # rebranded Nextcloud still counts
+assert not is_nextcloud('site.example', '', '1.1.1.1')      # ordinary site (status.php missing)
+assert not is_nextcloud('fake.example', '', '1.1.1.1')      # only part of the fields
+assert is_nextcloud('nc.example', '', '1.1.1.1') and calls.count('nc.example') == 1  # second time comes from the cache
 print('ok')
