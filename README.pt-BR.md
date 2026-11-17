@@ -18,8 +18,16 @@ docker compose up -d --build
 # abra http://localhost:8080
 ```
 
-A pasta `public/assets` é montada como volume, então dá para trocar as imagens sem
-reconstruir. Basta recarregar a página.
+O site (`public/`) e a configuração do nginx (`server/`) são montados como volumes, então atualizar
+não exige reconstruir nem derruba o site:
+
+```sh
+git pull                                                   # arquivos do site: servidos na hora
+docker compose exec the-cartographer nginx -s reload       # só se mudou server/nginx.conf ou security-headers.conf
+docker compose restart proxy                               # só se mudou server/server.py (o Nextcloud pausa ~1 s)
+```
+
+`docker compose up -d --build` só é necessário depois de mudar o `Dockerfile` ou o `docker-compose.yml`.
 
 **Sem Docker** (precisa de Python 3):
 

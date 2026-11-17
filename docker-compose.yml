@@ -6,8 +6,12 @@ services:
       # Behind a reverse proxy with HTTPS (recommended on a server), keep APP_BIND=127.0.0.1.
       - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8080}:80"
     volumes:
-      # Swap images in ./public/assets without rebuilding the image
-      - ./public/assets:/usr/share/nginx/html/assets:ro
+      # The site and nginx config are read from this folder, so updates need no rebuild and no
+      # downtime: `git pull` (site), plus `docker compose exec the-cartographer nginx -s reload`
+      # if the nginx config changed (see the README). Folders, not single files: git replaces files
+      # on pull, and a single-file mount would keep showing the old one.
+      - ./public:/usr/share/nginx/html:ro
+      - ./server:/etc/nginx/cartographer:ro
     depends_on:
       - proxy
     restart: unless-stopped
@@ -27,5 +31,5 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - ONEDRIVE_CLIENT_ID=${ONEDRIVE_CLIENT_ID:-}
     volumes:
-      - ./server/server.py:/app/server.py:ro
+      - ./server:/app:ro  # folder, not the file: see above
     restart: unless-stopped

@@ -17,8 +17,16 @@ docker compose up -d --build
 # open http://localhost:8080
 ```
 
-The `public/assets` folder is mounted as a volume, so you can swap images without rebuilding.
-Just reload the page.
+The site (`public/`) and the nginx config (`server/`) are mounted as volumes, so updates need no
+rebuild and don't take the site down:
+
+```sh
+git pull                                                   # site files: served right away
+docker compose exec the-cartographer nginx -s reload       # only if server/nginx.conf or security-headers.conf changed
+docker compose restart proxy                               # only if server/server.py changed (Nextcloud pauses ~1 s)
+```
+
+`docker compose up -d --build` is only needed after changing the `Dockerfile` or `docker-compose.yml`.
 
 **Without Docker** (needs Python 3):
 
